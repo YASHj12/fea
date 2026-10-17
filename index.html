@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Form / FEA — Understand how structures carry force</title>
+<style>
+  :root{--ink:#111414;--paper:#f3f2ed;--muted:#a5aaa7;--acid:#d8ff63;--line:rgba(255,255,255,.14);--serif:Georgia,'Times New Roman',serif;--sans:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--ink);color:#f5f5f0;font-family:var(--sans);-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}button{font:inherit}
+  .shell{max-width:1440px;margin:auto;padding:0 6.1vw}.topbar{height:84px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);position:relative;z-index:3}.brand{display:flex;gap:12px;align-items:center;font-size:13px;font-weight:760;letter-spacing:.15em}.brand-mark{width:27px;height:27px;border:1px solid rgba(216,255,99,.75);display:grid;place-items:center;transform:rotate(45deg)}.brand-mark span{display:block;width:9px;height:9px;background:var(--acid)}.brand small{display:block;color:#7f8581;font-size:8px;letter-spacing:.22em;font-weight:600;margin-top:4px}.nav{display:flex;align-items:center;gap:38px;color:#b6bbb7;font-size:12px}.nav a{transition:color .2s}.nav a:hover{color:var(--acid)}.nav .nav-cta{color:#e9ece7;border:1px solid rgba(255,255,255,.26);padding:12px 17px}.nav .nav-cta:hover{border-color:var(--acid);color:var(--acid)}.menu{display:none;background:none;border:0;color:white;font-size:22px}
+  .hero{position:relative;display:grid;grid-template-columns:46% 54%;min-height:634px;align-items:center;padding:73px 0 62px}.hero:before{content:"";position:absolute;width:430px;height:430px;left:-235px;top:100px;background:radial-gradient(circle,rgba(216,255,99,.055),transparent 70%);pointer-events:none}.hero-copy{position:relative;z-index:2;padding:0 0 15px}.eyebrow{display:flex;align-items:center;gap:12px;color:#bbc1bc;font-size:10px;letter-spacing:.21em;font-weight:650;text-transform:uppercase}.eyebrow:before{content:"";width:25px;height:1px;background:var(--acid)}h1{font-weight:450;font-size:clamp(54px,6.3vw,91px);line-height:.97;letter-spacing:-.067em;margin:28px 0 23px;max-width:630px}h1 em{font-family:var(--serif);font-weight:400;color:var(--acid);letter-spacing:-.065em}.hero-copy>p{max-width:400px;color:#a7aeaa;font-size:14px;line-height:1.75;margin:0}.actions{display:flex;align-items:center;gap:24px;margin-top:32px}.button{display:inline-flex;gap:24px;align-items:center;padding:15px 18px;background:var(--acid);color:#111611;font-size:11px;font-weight:700;letter-spacing:.025em;transition:transform .2s,background .2s}.button:hover{transform:translateY(-2px);background:#e5ff9b}.button span{font-size:17px;line-height:10px}.text-link{font-size:11px;color:#dce0dc;border-bottom:1px solid #626965;padding:8px 0}.text-link:hover{color:var(--acid);border-color:var(--acid)}.hero-note{display:flex;gap:10px;align-items:center;margin-top:45px;color:#767d79;font-size:10px;letter-spacing:.04em}.hero-note i{width:5px;height:5px;border-radius:50%;background:var(--acid);box-shadow:0 0 10px var(--acid)}
+  .visual{position:relative;height:486px;margin-left:-15px;isolation:isolate}.visual:before{content:"";position:absolute;inset:9% 3% 7% 1%;background:radial-gradient(ellipse at 52% 47%,rgba(99,112,106,.23),transparent 62%);z-index:-1}.visual-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:35px 35px;mask-image:radial-gradient(ellipse,black 15%,transparent 74%);opacity:.65}.simulation{position:absolute;inset:20px 6px 8px 0;display:grid;place-items:center}.simulation svg{width:100%;height:100%;overflow:visible}.spec-card{position:absolute;z-index:2;background:rgba(18,22,21,.88);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(8px);padding:12px 14px;color:#8f9691;font-size:9px;letter-spacing:.12em;text-transform:uppercase}.spec-card strong{display:block;font-weight:550;color:#eff2ed;font-size:12px;letter-spacing:.025em;margin-top:7px}.spec-a{top:22px;left:9px}.spec-b{right:4px;bottom:74px;width:130px}.spec-b strong{color:var(--acid);font-family:var(--serif);font-size:22px}.axis{position:absolute;bottom:15px;left:23px;color:#7d8580;font:9px ui-monospace,monospace;letter-spacing:.08em}.axis b{color:#dce1dc;font-weight:500}.legend{position:absolute;bottom:22px;right:2px;display:flex;align-items:center;gap:8px;color:#939a95;font-size:8px;letter-spacing:.09em;text-transform:uppercase}.legend-bar{height:3px;width:76px;background:linear-gradient(90deg,#47d2bd,#d3f866,#ffab49,#ec5548)}.mesh-line{fill:none;stroke:rgba(224,242,227,.47);stroke-width:.78;vector-effect:non-scaling-stroke}.stress{fill:url(#stressFill);stroke:rgba(236,255,224,.7);stroke-width:1.1;vector-effect:non-scaling-stroke}.mesh-faint{fill:none;stroke:rgba(225,241,232,.2);stroke-width:.65;vector-effect:non-scaling-stroke}.force{stroke:#d8ff63;stroke-width:1.25;fill:none;marker-end:url(#arrow)}.callout{stroke:#c4cec6;stroke-width:.7;fill:none}.call-text{fill:#dce3dd;font:9px ui-monospace,monospace;letter-spacing:.06em}.node{fill:#ddff68;filter:url(#glow)}.pulse{animation:pulse 2.1s ease-in-out infinite;transform-origin:center}@keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
+  .hero-bottom{border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:18px 0 0;color:#8b928e;font-size:9px;letter-spacing:.13em;text-transform:uppercase}.hero-bottom .scroll{display:flex;align-items:center;gap:12px}.scroll i{display:inline-block;width:1px;height:26px;background:linear-gradient(var(--acid),transparent)}.hero-bottom .nums{display:flex;gap:31px}.nums strong{color:#ecf0eb;font-weight:500;letter-spacing:0}
+  .intro{background:var(--paper);color:#171b19;padding:104px 0 100px}.intro-inner{display:grid;grid-template-columns:1fr 1fr;gap:9%;align-items:start}.intro-label{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#707770}.intro h2{font-size:clamp(34px,4.1vw,58px);line-height:1.08;font-weight:450;letter-spacing:-.055em;margin:17px 0 0;max-width:590px}.intro h2 em{font-family:var(--serif);font-weight:400}.intro-right{padding-top:27px}.intro-right p{font-size:14px;line-height:1.8;color:#656c66;max-width:420px;margin:0 0 29px}.under-link{display:inline-flex;align-items:center;gap:15px;font-size:11px;font-weight:700;border-bottom:1px solid #aeb3ab;padding-bottom:10px}.under-link:hover{border-color:#171b19}.under-link span{font-size:16px}.principles{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #d4d6cf;margin-top:80px}.principle{padding:21px 20px 0 0}.principle+.principle{border-left:1px solid #d4d6cf;padding-left:22px}.principle .index{font:11px ui-monospace,monospace;color:#7a8179}.principle h3{font-size:13px;font-weight:650;margin:21px 0 8px}.principle p{font-size:11px;line-height:1.65;color:#72786f;margin:0;max-width:230px}
+  .pathways{background:#e9e9e3;color:#171b19;padding:0 0 94px}.path-head{padding:0 0 28px;display:flex;align-items:end;justify-content:space-between}.path-head .intro-label{margin-bottom:12px}.path-head h2{margin:0;font-size:32px;letter-spacing:-.05em;font-weight:450}.path-head>span{font-size:10px;color:#72786f;letter-spacing:.08em}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.card{position:relative;min-height:235px;background:#f4f3ed;border:1px solid #dadbd4;padding:24px;display:flex;flex-direction:column;justify-content:space-between;transition:transform .25s,box-shadow .25s}.card:hover{transform:translateY(-4px);box-shadow:0 12px 25px #0000000a}.card-top{display:flex;align-items:center;justify-content:space-between;color:#737a72;font-size:9px;text-transform:uppercase;letter-spacing:.13em}.card-icon{width:31px;height:31px;border:1px solid #c8ccc2;display:grid;place-items:center;color:#272e29;font-size:14px}.card h3{font-size:22px;line-height:1.08;letter-spacing:-.045em;font-weight:500;margin:0 0 9px}.card p{font-size:11px;color:#737a72;line-height:1.6;margin:0;max-width:260px}.card-arrow{position:absolute;right:24px;bottom:27px;color:#50574f;font-size:18px}.footer{background:#111514;padding:27px 0;color:#808782;font-size:9px;letter-spacing:.12em;text-transform:uppercase}.footer-inner{display:flex;justify-content:space-between;align-items:center}.footer .brand{color:#e7eae4;font-size:10px}.footer-note{letter-spacing:.03em;text-transform:none}
+  .model-tag,.model-state,.model-hint{position:absolute;z-index:2;font:9px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.12em;color:#a9b2ab}.model-tag{top:19px;left:17px;display:flex;align-items:center;gap:9px}.model-tag i{width:6px;height:6px;border-radius:50%;background:#d8ff63;box-shadow:0 0 11px #d8ff63}.model-state{left:19px;bottom:23px;color:#d3dbd3;transition:color .25s}.model-hint{right:7px;bottom:23px;color:#7f8981;font-size:8px}.model-hint span{color:#d8ff63;padding:0 4px}.component{cursor:crosshair;outline:none;touch-action:none}.component.is-stretching{cursor:grabbing}.metal-body{fill:url(#cadMetal);stroke:#d1ddd2;stroke-width:1.2;vector-effect:non-scaling-stroke;transition:filter .35s}.component:hover .metal-body,.component:focus-visible .metal-body{filter:brightness(1.16)}.stress-low,.stress-high,.stress-hotspot,.mesh-overlay{opacity:0;transition:opacity .28s ease}.component:hover .stress-low,.component:focus-visible .stress-low{opacity:.5}.component:hover .stress-hotspot,.component:focus-visible .stress-hotspot{opacity:.85}.component:hover .mesh-overlay,.component:focus-visible .mesh-overlay{opacity:.46}.component.is-stretching .stress-low,.component.is-stretched .stress-low,.component.is-broken .stress-low{opacity:0}.component.is-stretching .stress-high,.component.is-stretched .stress-high{opacity:var(--strain,0)}.component.is-stretching .stress-hotspot,.component.is-stretched .stress-hotspot{opacity:var(--strain,0)}.component.is-broken .stress-high,.component.is-broken .stress-hotspot{opacity:.98}.component.is-compression .stress-high{fill:url(#compressionStress)}.component.is-compression .stress-hotspot{fill:url(#compressionHot)}.component.is-compression .fracture-system{opacity:0!important}.component.is-stretching .mesh-overlay,.component.is-stretched .mesh-overlay{opacity:.82}.component.is-broken .mesh-overlay{opacity:.9}.component.is-stretching .load-point,.component.is-stretched .load-point{opacity:1;filter:url(#softGlow)}.load-point,.load-ring{fill:#fff18b;opacity:0;pointer-events:none}.component:hover .load-point,.component:hover .load-ring,.component.is-stretching .load-ring,.component.is-stretched .load-ring,.component.is-broken .load-point,.component.is-broken .load-ring{opacity:1}.load-ring{fill:none;stroke:#e8ff83;stroke-width:1.1;stroke-dasharray:2 3}.load-label{fill:#e8ff83;font:8px ui-monospace,monospace;letter-spacing:.1em;opacity:0;pointer-events:none}.component:hover .load-label,.component.is-stretching .load-label,.component.is-stretched .load-label{opacity:1}.load-vector{fill:none;stroke:#e8ff83;stroke-width:1.8;opacity:0}.component.is-stretching .load-vector,.component.is-stretched .load-vector{opacity:.9}.support-markers{opacity:0;transition:opacity .2s}.component:hover .support-markers,.component.is-stretching .support-markers,.component.is-stretched .support-markers,.component.is-broken .support-markers{opacity:1}.node-ring{fill:rgba(216,255,99,.04);stroke:#d8ff63;stroke-width:1.2;stroke-dasharray:2 3}.node-dot{fill:#d8ff63}.node-label{fill:#d8ff63;font:8px ui-monospace,monospace;letter-spacing:.08em}.mount-node.is-load .node-ring{stroke:#ffac50;fill:rgba(255,118,67,.16);stroke-width:1.8;stroke-dasharray:none}.mount-node.is-load .node-dot{fill:#ff6947}.mount-node.is-load .node-label{fill:#ff9f67}.mount-node.is-hidden{opacity:0}.fracture-system{opacity:0;transition:opacity .18s}.fracture-system.is-cracking{opacity:.9}.component.is-broken .fracture-system{opacity:1}.crack-core{fill:none;stroke:#111514;stroke-width:5;stroke-linecap:round;stroke-linejoin:miter;vector-effect:non-scaling-stroke}.crack-edge{fill:none;stroke:#ff9b56;stroke-width:1.25;stroke-linecap:round;stroke-linejoin:miter;filter:url(#softGlow);vector-effect:non-scaling-stroke}.crack-edge.secondary{stroke:#ffdf79;stroke-width:.8;filter:none}.component.is-broken .crack-core{stroke:#0b0d0c;stroke-width:8}.component.is-broken .crack-edge{stroke:#ff624b;stroke-width:2.2}.component.is-broken .crack-edge.secondary{stroke:#ffe38b;stroke-width:1}.component:focus-visible{filter:drop-shadow(0 0 5px rgba(216,255,99,.45))}.model-state[data-state="hover"]{color:#d8ff63}.model-state[data-state="stretch"]{color:#ffd365}.model-state[data-state="broken"]{color:#ff8060}.component.is-compression .load-point{fill:#72dfff}.component.is-compression .load-ring{stroke:#72dfff}.component.is-compression .load-vector{stroke:#72dfff}.component.is-stretching .stress-high{transition:none}.component.is-broken .load-point{animation:loadPulse 1.15s ease-in-out infinite}@keyframes loadPulse{50%{opacity:.45}}
+  @media(max-width:850px){.shell{padding:0 5vw}.nav{gap:19px}.hero{grid-template-columns:1fr 1fr;min-height:590px}.visual{height:405px}.hero h1{font-size:clamp(52px,7vw,74px)}.intro-inner{gap:6%}.spec-b{right:-4px}}
+  @media(max-width:640px){.topbar{height:70px}.nav{display:none;position:absolute;top:69px;right:0;left:0;background:#171b19;padding:20px 5vw 24px;flex-direction:column;align-items:flex-start;gap:20px;border-bottom:1px solid var(--line)}.nav.open{display:flex}.menu{display:block}.hero{display:flex;flex-direction:column;align-items:stretch;padding:62px 0 35px}.hero-copy{padding:0}.hero h1{font-size:clamp(56px,14vw,80px);max-width:500px;margin:23px 0 17px}.hero-copy>p{font-size:13px}.actions{margin-top:25px}.hero-note{margin-top:25px}.visual{height:360px;margin:20px -12px 0}.spec-a{top:7px;left:15px}.spec-b{right:10px;bottom:47px}.legend{right:12px;bottom:7px}.axis{left:18px;bottom:5px}.hero-bottom{align-items:flex-start}.hero-bottom .nums{gap:13px;flex-direction:column;text-align:right;font-size:8px}.intro{padding:68px 0}.intro-inner{grid-template-columns:1fr;gap:21px}.intro-right{padding-top:0}.intro h2{font-size:39px}.principles{margin-top:48px;grid-template-columns:1fr;}.principle,.principle+.principle{border-left:0;padding:18px 0;border-top:1px solid #d4d6cf}.principle h3{margin:12px 0 6px}.pathways{padding-bottom:60px}.path-head{align-items:flex-start;gap:12px;flex-direction:column}.path-head h2{font-size:29px}.cards{grid-template-columns:1fr}.card{min-height:190px}.footer-inner{gap:18px;align-items:flex-start;flex-direction:column}.footer-note{line-height:1.5}}
+  @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+  @media(max-width:640px){.visual{height:380px}.model-state{left:17px;bottom:39px}.model-hint{left:17px;right:auto;bottom:17px;font-size:7px}}
+</style>
+</head>
+<body>
+<header class="shell topbar">
+  <a class="brand" href="#top" aria-label="Form FEA home"><span class="brand-mark"><span></span></span><span>FORM<small>FINITE ELEMENT ACADEMY</small></span></a>
+  <nav class="nav" id="nav"><a href="#approach">The approach</a><a href="#pathways">Learning paths</a><a href="#simulation">Simulation lab</a><a class="nav-cta" href="#pathways">Explore the curriculum <span aria-hidden="true">↗</span></a></nav>
+  <button class="menu" aria-label="Open navigation" aria-expanded="false" onclick="const n=document.getElementById('nav');n.classList.toggle('open');this.setAttribute('aria-expanded',n.classList.contains('open'))">☰</button>
+</header>
+<main id="top">
+  <section class="shell">
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">A better way to learn FEA</div>
+        <h1>Understand how<br>structures <em>carry force.</em></h1>
+        <p>Finite element analysis, from first principles to engineering judgment. Build the intuition to trust your model — and know when not to.</p>
+        <div class="actions"><a class="button" href="#pathways">Explore the learning paths <span>↗</span></a><a class="text-link" href="#approach">Our approach</a></div>
+        <div class="hero-note"><i></i> Mechanics first. Software second.</div>
+      </div>
+      <div class="visual" id="simulation" aria-label="Interactive CAD model of an automotive suspension control arm">
+        <div class="visual-grid"></div>
+        <div class="model-tag"><i></i> SUSPENSION CONTROL ARM</div>
+        <div class="simulation">
+          <svg viewBox="0 0 620 470" role="img" aria-labelledby="arm-title arm-desc">
+            <title id="arm-title">Forged automotive suspension control arm</title>
+            <desc id="arm-desc">An interactive suspension control arm. Hover anywhere for a local stress preview; click and drag to apply a load. Two supports remain fixed; deformation and a crack develop as load increases.</desc>
+            <defs>
+              <linearGradient id="cadMetal" x1="0" y1="0" x2=".9" y2="1"><stop offset="0" stop-color="#b8c4bb"/><stop offset=".24" stop-color="#6f7c73"/><stop offset=".53" stop-color="#3b4741"/><stop offset=".78" stop-color="#69766d"/><stop offset="1" stop-color="#a6b2a7"/></linearGradient>
+              <linearGradient id="edgeMetal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e1e9e0"/><stop offset="1" stop-color="#728078"/></linearGradient>
+              <linearGradient id="lowStress" x1=".12" y1=".2" x2=".9" y2=".8"><stop stop-color="#54c9b6" stop-opacity=".22"/><stop offset=".42" stop-color="#b6ef74" stop-opacity=".52"/><stop offset=".72" stop-color="#f5d85a" stop-opacity=".67"/><stop offset="1" stop-color="#fb8f4b" stop-opacity=".78"/></linearGradient>
+              <radialGradient id="highStress" gradientUnits="userSpaceOnUse" cx="280" cy="240" r="112"><stop offset="0" stop-color="#f34236" stop-opacity=".97"/><stop offset=".24" stop-color="#ff7842" stop-opacity=".9"/><stop offset=".5" stop-color="#ffd35c" stop-opacity=".76"/><stop offset=".78" stop-color="#b9ec72" stop-opacity=".48"/><stop offset="1" stop-color="#58c8b5" stop-opacity=".1"/></radialGradient>
+              <radialGradient id="jointHot" gradientUnits="userSpaceOnUse" cx="280" cy="240" r="74"><stop stop-color="#fff078" stop-opacity=".92"/><stop offset=".15" stop-color="#ff9b3e" stop-opacity=".8"/><stop offset=".56" stop-color="#ff5140" stop-opacity=".34"/><stop offset="1" stop-color="#ff4f39" stop-opacity="0"/></radialGradient>
+              <radialGradient id="compressionStress" gradientUnits="userSpaceOnUse" cx="280" cy="240" r="112"><stop offset="0" stop-color="#55c9ff" stop-opacity=".94"/><stop offset=".3" stop-color="#5189ff" stop-opacity=".82"/><stop offset=".64" stop-color="#55d9ca" stop-opacity=".6"/><stop offset="1" stop-color="#7ce6c2" stop-opacity=".12"/></radialGradient>
+              <radialGradient id="compressionHot" gradientUnits="userSpaceOnUse" cx="280" cy="240" r="74"><stop stop-color="#e7fbff" stop-opacity=".9"/><stop offset=".18" stop-color="#52cfff" stop-opacity=".84"/><stop offset=".58" stop-color="#4f82ff" stop-opacity=".48"/><stop offset="1" stop-color="#537fff" stop-opacity="0"/></radialGradient>
+              <pattern id="triMesh" width="34" height="30" patternUnits="userSpaceOnUse"><path d="M0 0L17 15L0 30M17 15L34 0M17 15L34 30M0 0H34M0 30H34" fill="none" stroke="#e5f3e7" stroke-opacity=".65" stroke-width=".62"/></pattern>
+              <path id="armShape" fill-rule="evenodd" d="M147 105 C176 103 199 114 228 128 L411 205 C434 214 450 228 450 243 C450 258 434 272 411 281 L228 352 C199 366 176 377 147 375 C123 375 109 359 109 337 L109 144 C109 121 123 105 147 105 Z M164 177 C185 174 204 182 227 191 L329 230 C341 234 341 241 329 246 L227 285 C204 294 185 302 164 299 C154 298 149 291 149 280 L149 195 C149 184 154 178 164 177 Z"/>
+              <clipPath id="armClip"><use href="#armShape" clip-rule="evenodd"/></clipPath>
+              <filter id="armShadow" x="-30%" y="-30%" width="170%" height="180%"><feGaussianBlur stdDeviation="12"/></filter>
+              <filter id="localizedWarp" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" x="-55" y="-55" width="730" height="580" color-interpolation-filters="sRGB"><feImage id="warpMap" x="0" y="0" width="620" height="470" preserveAspectRatio="none" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='620' height='470'%3E%3Crect width='620' height='470' fill='rgb(128,128,128)'/%3E%3C/svg%3E" result="displacementMap"/><feDisplacementMap id="warpDisplacement" in="SourceGraphic" in2="displacementMap" scale="0" xChannelSelector="R" yChannelSelector="G"/></filter>
+              <marker id="loadArrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#efff91"/></marker>
+              <filter id="softGlow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <!-- quiet CAD construction lines -->
+            <g fill="none" stroke="#aab8ad" stroke-opacity=".15" stroke-width=".8">
+              <path d="M80 243H520M282 70V405" stroke-dasharray="3 8"/>
+              <circle cx="147" cy="145" r="53"/><circle cx="147" cy="337" r="53"/><circle cx="429" cy="243" r="57"/>
+              <path d="M90 145H203M147 89V201M90 337H203M147 281V393"/>
+            </g>
+            <!-- soft product shadow -->
+            <use href="#armShape" fill="#000" opacity=".7" transform="translate(0 14)" filter="url(#armShadow)"/>
+            <g id="component" class="component" tabindex="0" role="button" aria-pressed="false" aria-label="Suspension control arm. Hover anywhere for local stress. Click and drag from any point to deform and initiate a crack. Press Enter to fail or reset.">
+              <!-- offset forged edge / part thickness -->
+              <path d="M148 109 C176 107 201 118 230 132L414 209Q453 224 453 243Q453 262 414 278L230 348C201 362 176 373 148 371Q115 371 115 337V145Q115 111 148 109Z" fill="#202923" stroke="#718077" stroke-width="2" transform="translate(8 10)"/>
+              <!-- Local elastic field: the fixed mounts stay crisp while the loaded area deflects -->
+              <g class="deformable-surface" filter="url(#localizedWarp)">
+              <!-- CAD surface with the triangular lightening pocket -->
+              <use href="#armShape" class="metal-body"/>
+              <!-- stress field, revealed on hover or locked by click -->
+              <g clip-path="url(#armClip)">
+                <rect x="95" y="88" width="390" height="305" fill="url(#lowStress)" class="stress-low"/>
+                <rect x="95" y="88" width="390" height="305" fill="url(#highStress)" class="stress-high"/>
+                <circle id="stressHotspot" cx="280" cy="240" r="74" fill="url(#jointHot)" class="stress-hotspot"/>
+                <rect x="95" y="88" width="390" height="305" fill="url(#triMesh)" class="mesh-overlay"/>
+              </g>
+              <!-- cast ribs and machined transitions -->
+              <g fill="none" stroke="url(#edgeMetal)" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M174 119C198 128 214 143 231 157L333 200" stroke-opacity=".63" stroke-width="2.2"/>
+                <path d="M174 360C198 350 214 336 231 321L333 282" stroke-opacity=".65" stroke-width="2.2"/>
+                <path d="M196 137C207 157 209 174 207 190M196 343C207 323 209 306 207 290" stroke-opacity=".58" stroke-width="1.6"/>
+                <path d="M229 156L229 191M229 321L229 285" stroke-opacity=".33" stroke-width="1.1"/>
+              </g>
+              <use href="#armShape" fill="none" stroke="#e1e9df" stroke-opacity=".75" stroke-width="1.2"/>
+              <path d="M169 116C190 117 208 127 226 138M169 364C190 363 208 353 226 342" fill="none" stroke="#f0f5ea" stroke-opacity=".5" stroke-width="1"/>
+              </g>
+              <!-- machined bushing eyes remain fixed outside the elastic surface -->
+              <g class="hardware">
+                <circle cx="147" cy="145" r="31" fill="#25302a" stroke="#c4d0c4" stroke-opacity=".8" stroke-width="2"/>
+                <circle cx="147" cy="145" r="23" fill="url(#cadMetal)" stroke="#dce6dc" stroke-opacity=".65" stroke-width="1"/>
+                <circle cx="147" cy="145" r="14" fill="#131917" stroke="#7d8a80" stroke-width="2"/>
+                <circle cx="147" cy="145" r="7" fill="#080c0b" stroke="#37443c" stroke-width="1"/>
+                <circle cx="147" cy="337" r="31" fill="#25302a" stroke="#c4d0c4" stroke-opacity=".8" stroke-width="2"/>
+                <circle cx="147" cy="337" r="23" fill="url(#cadMetal)" stroke="#dce6dc" stroke-opacity=".65" stroke-width="1"/>
+                <circle cx="147" cy="337" r="14" fill="#131917" stroke="#7d8a80" stroke-width="2"/>
+                <circle cx="147" cy="337" r="7" fill="#080c0b" stroke="#37443c" stroke-width="1"/>
+                <!-- ball joint housing -->
+                <g class="ball-joint">
+                  <circle cx="429" cy="243" r="35" fill="#202a24" stroke="#d5e0d5" stroke-width="2"/>
+                  <circle cx="429" cy="243" r="27" fill="url(#cadMetal)" stroke="#e2ebe1" stroke-opacity=".8" stroke-width="1.4"/>
+                  <circle cx="429" cy="243" r="16" fill="#18201b" stroke="#97a69a" stroke-width="2"/>
+                  <circle cx="429" cy="243" r="8" fill="#080d0a" stroke="#627166" stroke-width="1.3"/>
+                  <path d="M415 224A22 22 0 0 1 443 224" fill="none" stroke="#f2f6ec" stroke-opacity=".6" stroke-width="1.2"/>
+                </g>
+              </g>
+              <!-- Load vector and follower point; position updates from the pointer -->
+              <path id="loadVector" class="load-vector" d="" marker-end="url(#loadArrow)"/>
+              <circle id="loadPoint" cx="280" cy="240" r="4" class="load-point"/>
+              <circle id="loadRing" cx="280" cy="240" r="13" class="load-ring"/>
+              <text id="loadLabel" x="294" y="234" class="load-label">LOAD</text>
+              <!-- Two fixed boundary points and a selectable third mount -->
+              <g id="supportMarkers" class="support-markers" pointer-events="none">
+                <g class="mount-node" data-node="0"><circle class="node-ring" cx="147" cy="145" r="20"/><circle class="node-dot" cx="147" cy="145" r="3"/><text class="node-label" x="101" y="114">FIXED</text></g>
+                <g class="mount-node" data-node="1"><circle class="node-ring" cx="147" cy="337" r="20"/><circle class="node-dot" cx="147" cy="337" r="3"/><text class="node-label" x="101" y="375">FIXED</text></g>
+                <g class="mount-node" data-node="2"><circle class="node-ring" cx="429" cy="243" r="22"/><circle class="node-dot" cx="429" cy="243" r="3"/><text class="node-label" x="455" y="218">FIXED</text></g>
+              </g>
+              <!-- Cursor-centred crack initiation and final fracture seam -->
+              <g id="fracture" class="fracture-system" clip-path="url(#armClip)" pointer-events="none">
+                <path id="crackCore" d="" class="crack-core"/>
+                <path id="crackEdgeA" d="" class="crack-edge"/>
+                <path id="crackEdgeB" d="" class="crack-edge secondary"/>
+              </g>
+            </g>
+          </svg>
+        </div>
+        <div class="model-state" id="modelState" data-state="rest" aria-live="polite">CAD MODEL · REST STATE</div>
+        <div class="model-hint" id="modelHint">HOVER ANYWHERE <span>·</span> LEFT-CLICK + DRAG</div>
+      </div>
+    </div>
+    <div class="hero-bottom"><div class="scroll"><i></i><span>Scroll to explore</span></div><div class="nums"><span><strong>01</strong> / Mechanics</span><span><strong>02</strong> / Modeling</span><span><strong>03</strong> / Judgment</span></div></div>
+  </section>
+  <section class="intro" id="approach">
+    <div class="shell">
+      <div class="intro-inner">
+        <div><div class="intro-label">A different kind of engineering education</div><h2>Not just how to run a simulation. <em>How to understand one.</em></h2></div>
+        <div class="intro-right"><p>FEA is more than colorful contours. Learn the mechanics beneath the model, the assumptions behind the solver, and the judgment that turns a result into a decision.</p><a class="under-link" href="#pathways">See how we teach <span>↗</span></a></div>
+      </div>
+      <div class="principles">
+        <article class="principle"><span class="index">01 / FIRST PRINCIPLES</span><h3>Build the physical intuition</h3><p>Start with equilibrium, energy, and the behavior of real structures.</p></article>
+        <article class="principle"><span class="index">02 / COMPUTATIONAL THINKING</span><h3>Make the math make sense</h3><p>Connect discretization and element formulation to what the solver computes.</p></article>
+        <article class="principle"><span class="index">03 / ENGINEERING JUDGMENT</span><h3>Know what to trust</h3><p>Verify, validate, and communicate results with confidence.</p></article>
+      </div>
+    </div>
+  </section>
+  <section class="pathways" id="pathways">
+    <div class="shell">
+      <div class="path-head"><div><div class="intro-label">Choose your starting point</div><h2>From fundamentals to fluency.</h2></div><span>THREE LEARNING PATHS &nbsp; ↘</span></div>
+      <div class="cards">
+        <a class="card" href="#simulation"><div class="card-top"><span>Path 01 · Foundations</span><span class="card-icon">⌁</span></div><div><h3>Structural mechanics,<br>made intuitive.</h3><p>Understand loads, constraints, stress, strain, and stiffness.</p></div><span class="card-arrow">↗</span></a>
+        <a class="card" href="#simulation"><div class="card-top"><span>Path 02 · The method</span><span class="card-icon">⌘</span></div><div><h3>See inside the<br>finite element method.</h3><p>From weak form to assembly, convergence, and beyond.</p></div><span class="card-arrow">↗</span></a>
+        <a class="card" href="#simulation"><div class="card-top"><span>Path 03 · Practice</span><span class="card-icon">◉</span></div><div><h3>Think like an<br>analysis engineer.</h3><p>Model real parts, interrogate results, defend decisions.</p></div><span class="card-arrow">↗</span></a>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="footer"><div class="shell footer-inner"><a class="brand" href="#top"><span class="brand-mark"><span></span></span><span>FORM<small>FINITE ELEMENT ACADEMY</small></span></a><span class="footer-note">Engineering clarity, from first principles.</span><span>© FORM FEA · 2026</span></div></footer>
+<script>
+(() => {
+  const arm = document.getElementById('component');
+  const svg = arm.ownerSVGElement;
+  const state = document.getElementById('modelState');
+  const hint = document.getElementById('modelHint');
+  const hotspot = document.getElementById('stressHotspot');
+  const highStress = document.getElementById('highStress');
+  const jointHot = document.getElementById('jointHot');
+  const loadPoint = document.getElementById('loadPoint');
+  const loadRing = document.getElementById('loadRing');
+  const loadLabel = document.getElementById('loadLabel');
+  const loadVector = document.getElementById('loadVector');
+  const warpMap = document.getElementById('warpMap');
+  const warp = document.getElementById('warpDisplacement');
+  const crackCore = document.getElementById('crackCore');
+  const crackA = document.getElementById('crackEdgeA');
+  const crackB = document.getElementById('crackEdgeB');
+  const fracture = document.getElementById('fracture');
+  const mounts = [{x:147,y:145},{x:147,y:337},{x:429,y:243}];
+  const mountEls = [...document.querySelectorAll('.mount-node')];
+  const maxDrag = 122;
+  let strain = 0, loadTravel = 0, dragging = false, dragStart = {x:0,y:0};
+  let loadOrigin = {x:280,y:240}, loadTarget = {x:280,y:240}, vector = {x:1,y:0}, activeMount = null, loadMode = 'none';
+  let pointer = {x:280,y:240};
+  const clamp = n => Math.max(0, Math.min(1,n));
+  const clampPoint = p => ({x:Math.max(0,Math.min(620,p.x)),y:Math.max(0,Math.min(470,p.y))});
+  const svgPoint = e => {
+    const p=svg.createSVGPoint(); p.x=e.clientX; p.y=e.clientY;
+    return clampPoint(p.matrixTransform(svg.getScreenCTM().inverse()));
+  };
+  const nearestMount = p => {
+    let best=null, distance=Infinity;
+    mounts.forEach((m,i)=>{const d=Math.hypot(p.x-m.x,p.y-m.y);if(d<distance){distance=d;best=i;}});
+    return distance<34?best:null;
+  };
+  const classifyLoad = dir => {
+    const supports=mounts.map((_,i)=>i).filter(i=>activeMount===null?(i===0||i===1):i!==activeMount);
+    const center=supports.reduce((sum,i)=>({x:sum.x+mounts[i].x,y:sum.y+mounts[i].y}),{x:0,y:0});
+    center.x/=supports.length;center.y/=supports.length;
+    const rx=loadOrigin.x-center.x, ry=loadOrigin.y-center.y;
+    return dir.x*rx+dir.y*ry>=0?'tension':'compression';
+  };
+  const applyLoadMode = mode => {
+    loadMode=mode;
+    arm.classList.toggle('is-tension',mode==='tension');
+    arm.classList.toggle('is-compression',mode==='compression');
+  };
+  const setMounts = selected => {
+    mountEls.forEach((el,i)=>{
+      const shown = selected!==null || i<2;
+      el.classList.toggle('is-hidden',!shown);
+      el.classList.toggle('is-load',selected===i);
+      el.classList.toggle('is-fixed',shown&&selected!==i);
+      const label=el.querySelector('.node-label');
+      if(label) label.textContent=selected===i?'LOAD':'FIXED';
+    });
+  };
+  const announce = mode => {
+    state.dataset.state=mode;
+    if(mode==='broken'){
+      state.textContent='TENSILE CRACK · FRACTURE';
+      hint.innerHTML='CLICK MODEL <span>·</span> RESET';
+    } else if(mode==='stretch'){
+      state.textContent=loadMode==='compression'?'COMPRESSION · STRESS ONLY':loadMode==='tension'?'TENSION · DEFORMATION':'LOAD POINT SELECTED';
+      hint.innerHTML=loadMode==='compression'?'NO CRACK IN COMPRESSION <span>·</span> TWO SUPPORTS FIXED':loadMode==='tension'?'KEEP PULLING <span>·</span> CRACK INITIATES':'PULL AWAY TO STRETCH <span>·</span> PUSH TO COMPRESS';
+    } else if(mode==='stretched'){
+      state.textContent=loadMode==='compression'?'COMPRESSION HELD · STRESS ONLY':'TENSION HELD · DEFORMED';
+      hint.innerHTML=loadMode==='compression'?'STRESS WITHOUT FRACTURE <span>·</span> DRAG TO CHANGE':'DRAG FROM ANY POINT <span>·</span> CONTINUE';
+    } else if(mode==='hover'){
+      state.textContent='LOCAL STRESS · CURSOR POSITION';
+      hint.innerHTML='TWO SUPPORTS FIXED <span>·</span> GRAB + DRAG IN ANY DIRECTION';
+    } else {
+      state.textContent='CAD MODEL · REST STATE';
+      hint.innerHTML='HOVER ANYWHERE <span>·</span> LEFT-CLICK + DRAG';
+    }
+  };
+  const setCenter = p => {
+    [hotspot,highStress,jointHot].forEach(el=>{
+      el.setAttribute('cx',p.x.toFixed(1)); el.setAttribute('cy',p.y.toFixed(1));
+    });
+    loadPoint.setAttribute('cx',p.x.toFixed(1));
+    loadPoint.setAttribute('cy',p.y.toFixed(1));
+    loadRing.setAttribute('cx',p.x.toFixed(1));
+    loadRing.setAttribute('cy',p.y.toFixed(1));
+    loadLabel.setAttribute('x',(p.x+14).toFixed(1));
+    loadLabel.setAttribute('y',(p.y-12).toFixed(1));
+    loadLabel.style.opacity=activeMount===null?'':'0';
+  };
+  const pathAcross = (center, dir, length, offset=0) => {
+    const n={x:-dir.y,y:dir.x};
+    const points=[];
+    const count=18;
+    for(let i=0;i<=count;i++){
+      const t=i/count-.5;
+      const jag=(i===0||i===count)?0:(i%2?1:-1)*(1.2+strain*2.8);
+      points.push({x:center.x+n.x*(t*length+offset)+dir.x*jag,
+                   y:center.y+n.y*(t*length+offset)+dir.y*jag});
+    }
+    return points.map((p,i)=>`${i?'L':'M'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  };
+  const updateFracture = () => {
+    if(loadMode!=='tension'||strain<.4){fracture.classList.remove('is-cracking');crackCore.setAttribute('d','');crackA.setAttribute('d','');crackB.setAttribute('d','');return;}
+    const growth=clamp((strain-.4)/.6);
+    const len=12+growth*112;
+    const crackCenter=loadTarget;
+    const d=pathAcross(crackCenter,vector,len);
+    crackCore.setAttribute('d',d);
+    crackCore.setAttribute('stroke-width',(1.6+strain*6.5).toFixed(1));
+    crackA.setAttribute('d',pathAcross(crackCenter,vector,len,2.2));
+    crackB.setAttribute('d',pathAcross(crackCenter,vector,len,-2.2));
+    fracture.classList.add('is-cracking');
+  };
+  const updateWarpMap = () => {
+    // SVG displacement maps sample source pixels from the opposite side; invert channels so the visible part deflects along the drag vector.
+    const dx=Math.round(128-vector.x*118), dy=Math.round(128-vector.y*118);
+    const supportIds=activeMount===null?[0,1]:[0,1,2].filter(i=>i!==activeMount);
+    const nearestSupport=Math.min(...supportIds.map(i=>Math.hypot(loadOrigin.x-mounts[i].x,loadOrigin.y-mounts[i].y)));
+    const radius=Math.max(26,Math.min(118,nearestSupport*.88));
+    const map=`<svg xmlns="http://www.w3.org/2000/svg" width="620" height="470"><defs><radialGradient id="g" gradientUnits="userSpaceOnUse" cx="${loadOrigin.x}" cy="${loadOrigin.y}" r="${radius}"><stop offset="0" stop-color="rgb(${dx},${dy},128)"/><stop offset=".48" stop-color="rgb(${Math.round((dx+128)/2)},${Math.round((dy+128)/2)},128)"/><stop offset="1" stop-color="rgb(128,128,128)"/></radialGradient></defs><rect width="620" height="470" fill="url(#g)"/></svg>`;
+    const uri='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(map);
+    warpMap.setAttribute('href',uri);
+    warp.setAttribute('scale',(Math.min(loadTravel,maxDrag)*2).toFixed(1));
+  };
+  const paint = () => {
+    arm.style.setProperty('--strain',strain.toFixed(3));
+    setCenter(loadOrigin);
+    const moved=loadTarget;
+    loadPoint.setAttribute('cx',moved.x.toFixed(1));loadPoint.setAttribute('cy',moved.y.toFixed(1));
+    loadRing.setAttribute('cx',moved.x.toFixed(1));loadRing.setAttribute('cy',moved.y.toFixed(1));
+    loadLabel.setAttribute('x',(moved.x+14).toFixed(1));loadLabel.setAttribute('y',(moved.y-12).toFixed(1));
+    const extent=26+strain*43;
+    loadVector.setAttribute('d',`M${moved.x.toFixed(1)} ${moved.y.toFixed(1)}L${(moved.x+vector.x*extent).toFixed(1)} ${(moved.y+vector.y*extent).toFixed(1)}`);
+    if(strain>0) updateWarpMap(); else warp.setAttribute('scale','0');
+    updateFracture();
+    arm.setAttribute('aria-pressed',String(strain>0||arm.classList.contains('is-broken')));
+  };
+  const reset = () => {
+    strain=0; loadTravel=0; dragging=false; activeMount=null; vector={x:1,y:0}; applyLoadMode('none');
+    arm.classList.remove('is-broken','is-stretching','is-stretched','is-tension','is-compression');
+    arm.style.removeProperty('--strain'); arm.setAttribute('aria-pressed','false');
+    arm.removeAttribute('transform'); warp.setAttribute('scale','0');
+    loadVector.setAttribute('d','');
+    crackCore.setAttribute('d','');crackA.setAttribute('d','');crackB.setAttribute('d','');fracture.classList.remove('is-cracking');
+    loadOrigin=pointer; loadTarget=pointer; setMounts(null); setCenter(pointer);
+    announce(arm.matches(':hover')?'hover':'rest');
+  };
+  const fail = () => {
+    strain=1; dragging=false;
+    arm.classList.remove('is-stretching','is-stretched');arm.classList.add('is-broken');
+    paint();announce('broken');
+  };
+  const updateHover = p => {
+    pointer=p;
+    if(strain||dragging||arm.classList.contains('is-broken')) return;
+    loadOrigin=p; loadTarget=p; loadTravel=0; activeMount=nearestMount(p); applyLoadMode('none'); setMounts(activeMount); paint();
+  };
+  arm.addEventListener('pointerenter',e=>{if(!strain) {updateHover(svgPoint(e));announce('hover');}});
+  arm.addEventListener('pointermove',e=>{
+    const p=svgPoint(e); pointer=p;
+    if(dragging){
+      const dx=p.x-dragStart.x,dy=p.y-dragStart.y,dist=Math.hypot(dx,dy);
+      loadTarget=p; loadTravel=dist;
+      if(dist>0.01) vector={x:dx/dist,y:dy/dist};
+      if(dist>3){const nextMode=classifyLoad(vector);if(nextMode!==loadMode){applyLoadMode(nextMode);announce('stretch');}}
+      strain=clamp((arm.dataset.startStrain?Number(arm.dataset.startStrain):0)+dist/maxDrag);
+      arm.classList.add('is-stretched');paint();
+      if(strain>=1&&loadMode==='tension') fail();
+    } else if(!strain&&!arm.classList.contains('is-broken')) updateHover(p);
+  });
+  arm.addEventListener('pointerdown',e=>{
+    if(e.button!==undefined&&e.button!==0)return;
+    e.preventDefault();
+    if(arm.classList.contains('is-broken')){reset();return;}
+    const p=svgPoint(e);pointer=p;dragStart=p;
+    activeMount=nearestMount(p);
+    applyLoadMode('none');
+    loadOrigin=activeMount===null?p:mounts[activeMount];
+    loadTarget=loadOrigin;loadTravel=0;
+    setMounts(activeMount);
+    arm.dataset.startStrain=String(strain);
+    dragging=true;arm.classList.add('is-stretching');
+    try{arm.setPointerCapture(e.pointerId)}catch(_){ }
+    paint();arm.classList.add('is-stretching');
+    announce('stretch');
+  });
+  const release=()=>{
+    if(!dragging)return;
+    dragging=false;arm.classList.remove('is-stretching');
+    if(strain>0){arm.classList.add('is-stretched');announce('stretched');}
+    else {arm.classList.remove('is-stretched');announce(arm.matches(':hover')?'hover':'rest');}
+  };
+  arm.addEventListener('pointerup',release);arm.addEventListener('pointercancel',release);
+  arm.addEventListener('pointerleave',()=>{if(!strain&&!dragging&&!arm.classList.contains('is-broken')){setMounts(null);announce('rest');}});
+  arm.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='ArrowUp'){
+      e.preventDefault();if(arm.classList.contains('is-broken'))return;
+      strain=clamp(strain+.15);loadTravel=strain*maxDrag;activeMount=activeMount??null;setMounts(activeMount);
+      applyLoadMode(classifyLoad(vector));arm.classList.add('is-stretched');paint();if(strain>=1&&loadMode==='tension')fail();else announce('stretched');
+    } else if(e.key==='ArrowLeft'||e.key==='ArrowDown'){
+      e.preventDefault();if(arm.classList.contains('is-broken'))return;
+      strain=clamp(strain-.15);loadTravel=strain*maxDrag;if(!strain)applyLoadMode('none');paint();if(!strain)arm.classList.remove('is-stretched');announce(strain?'stretched':'rest');
+    } else if(e.key==='Enter'||e.key===' '){
+      e.preventDefault();if(arm.classList.contains('is-broken'))reset();else {applyLoadMode(classifyLoad(vector));strain=1;loadTravel=maxDrag;arm.classList.add('is-stretched');if(loadMode==='tension')fail();else {paint();announce('stretched');}}
+    }
+  });
+  setMounts(null);paint();
+})();
+</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a4bcde332ed23199',t:'MTc5MjIxNDU3Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
